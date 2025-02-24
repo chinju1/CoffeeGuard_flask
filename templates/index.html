@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COFFEE GUARD: AI & IoT-Powered Coffee Plantation Monitoring System</title>
+    <style>
+        body {
+            background-image: url('/static/image.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 1200px;
+        }
+        .form-section, .content-section {
+            margin-top: 20px;
+            width: 100%;
+        }
+        .content-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .section-box {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        @media (min-width: 768px) {
+            .section-box {
+                width: 30%;
+            }
+        }
+        .links {
+            margin-top: 10px;
+        }
+        .links a {
+            color: lightblue;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        .form-section input, .form-section button {
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+        }
+        .form-section button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        .form-section button:hover {
+            background-color: #218838;
+        }
+        .climate-inputs label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        #user_input_fields {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>COFFEE GUARD: AI & IoT-Powered Coffee Plantation Monitoring System</h1>
+
+        <!-- Disease Input Form -->
+        <div class="form-section">
+            <form method="POST">
+                <label for="data_source">Select Data Source:</label>
+                <input type="radio" id="firebase" name="data_source" value="firebase" checked>
+                <label for="firebase">Firebase</label>
+                <input type="radio" id="user_input" name="data_source" value="user_input">
+                <label for="user_input">User Input</label>
+                <div id="user_input_fields">
+                    <label for="disease_name">Enter Disease Name:</label>
+                    <input type="text" id="disease_name" name="disease_name">
+                </div>
+                <button type="submit">Check Disease</button>
+            </form>
+        </div>
+
+        <!-- Disease Information Section -->
+        {% if disease_info %}
+        <div class="section-box">
+            <h2>Disease Information</h2>
+            <p><strong>About:</strong> {{ disease_info }}</p>
+            <div class="links">
+                {% set disease_mapping = {
+                    "Health": "Health",
+                    "Miner": "Leaf_miner",
+                    "Rust": "Coffee_rust",
+                    "Phoma": "Phoma",
+                    "Cercospora": "Cercospora"
+                } %}
+                <a href="https://en.wikipedia.org/wiki/{{ disease_mapping.get(disease_name, disease_name | replace(' ', '_')) }}" target="_blank">
+                    More Disease Information
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Content Section -->
+        <div class="content-section">
+            
+            <!-- Climate Data Input -->
+            <div class="section-box">
+                <h2>Climate Data and Harvesting Condition</h2>
+                <p>Data from Sensor</p>
+                <h3>Harvesting Condition</h3>
+                <p><strong>Humidity:</strong> {{ humidity }}</p>
+                <p><strong>Rainfall:</strong> {{ rainfall }}</p>
+                <p><strong>Temperature:</strong> {{ temperature }}</p>
+                <p><strong>Status:</strong> {{ harvesting_condition }}</p>
+            </div>
+
+            <!-- Government Schemes -->
+            <div class="section-box">
+                <h2>Government Schemes</h2>
+                <ul>
+                    <li><a href="https://coffeeboard.gov.in/15th-comission.html" target="_blank"><strong>15th Finance Commission</strong></a>: Various support schemes.</li>
+                    <li><a href="https://coffeeboard.gov.in/MTF-Schems.html" target="_blank"><strong>MTF Schemes</strong></a>: Multiple Transfer Fund (MTF) Schemes.</li>
+                    <li><a href="https://coffeeboard.gov.in/modalities-implementation-support-schemes.html" target="_blank"><strong>Implementation Support Schemes</strong></a>: Structured implementation support.</li>
+                    <li><a href="https://coffeeboard.gov.in/rainfall-insurance-scheme-coffee-growers-risc.html" target="_blank"><strong>Rainfall Insurance (RISC)</strong></a>: Insurance for coffee growers.</li>
+                </ul>
+            </div>
+
+            <!-- Coffee Market Data -->
+            <div class="section-box">
+                <h2>Coffee Market Today</h2>
+                <p>As of {{ current_date }}, the coffee market in Kerala is experiencing notable price fluctuations:</p>
+                <ul>
+                    <li><strong>Average Price:</strong> ₹31,250 per Quintal</li>
+                    <li><strong>Lowest Price:</strong> ₹23,100 per Quintal</li>
+                    <li><strong>Highest Price:</strong> ₹46,000 per Quintal</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('input[name="data_source"]').forEach(elem => {
+            elem.addEventListener("change", function(event) {
+                document.getElementById("user_input_fields").style.display = 
+                    event.target.value === "user_input" ? "block" : "none";
+            });
+        });
+    </script>
+</body>
+</html>
