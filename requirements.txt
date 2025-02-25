@@ -30,7 +30,7 @@ google-pasta==0.2.0
 google-resumable-media==2.7.2
 googleapis-common-protos==1.67.0
 grpcio==1.70.0
-grpcio-status==1.70.0
+grpcio-status==1.55.0
 gunicorn==23.0.0
 h11==0.14.0
 h5py==3.13.0
@@ -54,7 +54,7 @@ optree==0.14.0
 packaging==24.2
 pillow==11.1.0
 proto-plus==1.26.0
-protobuf==5.26.1
+protobuf==4.25.3
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pycparser==2.22
@@ -75,6 +75,7 @@ tensorboard==2.15.2
 tensorboard-data-server==0.7.2
 tensorflow==2.15.0
 tensorflow-estimator==2.15.0
+tensorflow-intel==2.15.0
 tensorflow-io-gcs-filesystem==0.31.0
 termcolor==2.5.0
 typing_extensions==4.12.2
