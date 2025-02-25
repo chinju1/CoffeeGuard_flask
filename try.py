@@ -6,24 +6,24 @@ import os
 
 app = Flask(__name__)
 
-# Firebase setup
-firebase_cred_path = 'E:/projects/linuxtraining/mlm-leaf-disease-detection-firebase-adminsdk-depno-7c5ba0e6e8.json'
-if not firebase_admin._apps:
-    if os.path.exists(firebase_cred_path):
-        try:
-            cred = credentials.Certificate(firebase_cred_path)
-            firebase_admin.initialize_app(cred, {
-                'databaseURL': 'https://mlm-leaf-disease-detection-default-rtdb.asia-southeast1.firebasedatabase.app'
-            })
-        except Exception as e:
-            print(f"Error initializing Firebase: {e}")
-    else:
-        print(f"Firebase credentials file not found: {firebase_cred_path}")
+# 🔹 STEP 1: Debug Firebase Credentials Path
+firebase_cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "/opt/render/project/src/firebase.json")
 
-# Disease labels based on ID mapping
+print(f"🟡 Checking Firebase credentials path: {firebase_cred_path}")
+print(f"🟡 Does the file exist? {os.path.exists(firebase_cred_path)}")
+
+try:
+    if not firebase_admin._apps:
+        cred = credentials.Certificate(firebase_cred_path)
+        firebase_admin.initialize_app(cred, {
+            'databaseURL': 'https://mlm-leaf-disease-detection-default-rtdb.asia-southeast1.firebasedatabase.app'
+        })
+        print("✅ Firebase initialized successfully!")
+except Exception as e:
+    print(f"🔥 Error initializing Firebase: {e}")
+
+# 🔹 Disease labels based on ID mapping
 labels = ['Health', 'Miner', 'Rust', 'Phoma', 'Cercospora']
-
-# Disease descriptions
 diseases = {
     "rust": "Rust disease is caused by Hemileia vastatrix and affects coffee leaves.",
     "phoma": "Phoma leaf spot causes brown lesions on leaves, often due to fungi.",
@@ -43,46 +43,43 @@ def index():
 
     if request.method == "POST":
         data_source = request.form.get("data_source")
+
         if data_source == "firebase":
-            # Fetch disease ID from Firebase
-            disease_id = db.reference("/disease/id").get()
+            try:
+                disease_id = db.reference("/disease/id").get()
+                if isinstance(disease_id, int) and 0 <= disease_id < len(labels):
+                    disease_name = labels[disease_id]
+                else:
+                    disease_name = "Unknown"
+                disease_info = diseases.get(disease_name.lower(), "Disease not found.")
+            except Exception as e:
+                print(f"🔥 Error fetching disease data: {e}")
+                disease_name = "Error"
+                disease_info = "Could not fetch data."
 
-            # Convert ID to disease name
-            if isinstance(disease_id, int) and 0 <= disease_id < len(labels):
-                disease_name = labels[disease_id]
-            else:
-                disease_name = "Unknown"
-
-            # Get disease description
-            disease_info = diseases.get(disease_name.lower(), "Disease not found.")
-        
         elif data_source == "user_input":
             disease_name = request.form.get("disease_name")
             if disease_name:
                 disease_info = diseases.get(disease_name.lower(), "Disease not found.")
 
-        # Fetch climate data from Firebase
-        climate_data = db.reference("/data").get() or {}
-        humidity = climate_data.get("humidity", "N/A")
-        rainfall = "Yes" if climate_data.get("rain", 0) == 1 else "No"
-        temperature = climate_data.get("temperature", "N/A")
-
         try:
-            # Update harvesting condition based on climate data
+            climate_data = db.reference("/data").get() or {}
+            humidity = climate_data.get("humidity", "N/A")
+            rainfall = "Yes" if climate_data.get("rain", 0) == 1 else "No"
+            temperature = climate_data.get("temperature", "N/A")
+
             harvesting_condition = determine_harvesting_condition(rainfall, float(humidity), float(temperature))
-        except ValueError as e:
-            print(f"Error converting climate data to float: {e}")
+        except Exception as e:
+            print(f"🔥 Error fetching climate data: {e}")
             harvesting_condition = "Error in climate data"
 
-    # Fetch coffee market data
     coffee_market_info = get_coffee_market_info()
 
-    # Government schemes data
     government_schemes = {
-        "15th Finance Commission": "The Coffee Board offers various schemes under the 15th Finance Commission. [3]",
-        "MTF Schemes": "The Coffee Board offers various MTF schemes. [4]",
-        "Modalities of Implementation Support Schemes": "The Coffee Board provides modalities for implementation support schemes. [5]",
-        "Rainfall Insurance Scheme for Coffee Growers (RISC)": "The Coffee Board offers a rainfall insurance scheme for coffee growers. [6]"
+        "15th Finance Commission": "The Coffee Board offers various schemes under the 15th Finance Commission.",
+        "MTF Schemes": "The Coffee Board offers various MTF schemes.",
+        "Modalities of Implementation Support Schemes": "The Coffee Board provides modalities for implementation support schemes.",
+        "Rainfall Insurance Scheme for Coffee Growers (RISC)": "The Coffee Board offers a rainfall insurance scheme for coffee growers."
     }
 
     return render_template("index.html", disease_info=disease_info, disease_name=disease_name,
@@ -92,14 +89,16 @@ def index():
 
 @app.route("/submit_climate_data", methods=["POST"])
 def submit_climate_data():
-    rain = int(request.form.get("rain"))
-    humidity = request.form.get("humidity")
-    temperature = request.form.get("temperature")
-    
-    # Update harvesting condition based on climate data
-    harvesting_condition = determine_harvesting_condition("Yes" if rain == 1 else "No", float(humidity), float(temperature))
-    
-    return redirect(url_for('index'))
+    try:
+        rain = int(request.form.get("rain"))
+        humidity = request.form.get("humidity")
+        temperature = request.form.get("temperature")
+
+        harvesting_condition = determine_harvesting_condition("Yes" if rain == 1 else "No", float(humidity), float(temperature))
+        return redirect(url_for('index'))
+    except Exception as e:
+        print(f"🔥 Error processing climate data: {e}")
+        return redirect(url_for('index'))
 
 def determine_harvesting_condition(rain, humidity, temperature):
     if rain == "No":
@@ -118,8 +117,7 @@ def determine_harvesting_condition(rain, humidity, temperature):
         return "Conditions not ideal for harvesting."
 
 def get_coffee_market_info():
-    # Simulate fetching the latest coffee market data
-    coffee_market_info = """
+    return """
     <ul>
         <li>As of today, the coffee market in Kerala is experiencing notable price fluctuations:</li>
         <li><strong>Current Prices:</strong></li>
@@ -139,7 +137,6 @@ def get_coffee_market_info():
         </ul>
     </ul>
     """
-    return coffee_market_info
 
 if __name__ == "__main__":
     app.run(debug=True)
