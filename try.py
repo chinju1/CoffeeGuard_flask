@@ -3,24 +3,28 @@ import firebase_admin
 from firebase_admin import credentials, db
 import datetime
 import os
+import json
+import base64
 
 app = Flask(__name__)
 
-# 🔹 STEP 1: Debug Firebase Credentials Path
-firebase_cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "/opt/render/project/src/firebase.json")
+# 🔹 STEP 1: Load Firebase Credentials from Environment Variable
+firebase_cred_base64 = os.getenv("FIREBASE_CREDENTIALS")
 
-print(f"🟡 Checking Firebase credentials path: {firebase_cred_path}")
-print(f"🟡 Does the file exist? {os.path.exists(firebase_cred_path)}")
+if firebase_cred_base64:
+    try:
+        firebase_cred_json = base64.b64decode(firebase_cred_base64).decode("utf-8")
+        cred_dict = json.loads(firebase_cred_json)
 
-try:
-    if not firebase_admin._apps:
-        cred = credentials.Certificate(firebase_cred_path)
+        cred = credentials.Certificate(cred_dict)
         firebase_admin.initialize_app(cred, {
             'databaseURL': 'https://mlm-leaf-disease-detection-default-rtdb.asia-southeast1.firebasedatabase.app'
         })
         print("✅ Firebase initialized successfully!")
-except Exception as e:
-    print(f"🔥 Error initializing Firebase: {e}")
+    except Exception as e:
+        print(f"🔥 Error initializing Firebase: {e}")
+else:
+    print("⚠️ Firebase credentials not found in environment variables.")
 
 # 🔹 Disease labels based on ID mapping
 labels = ['Health', 'Miner', 'Rust', 'Phoma', 'Cercospora']
